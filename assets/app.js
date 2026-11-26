@@ -421,4 +421,127 @@
   paintLadders();
   paintCompletion();
   document.addEventListener('wtn:progress', function () { paintLadders(); });
+
+  /* ---------- round-2 structural: TOC, back-to-top, table wrapper ---------- */
+  var IS_AR = (PD.lang === 'ar') || document.documentElement.lang === 'ar';
+  /* Labels reuse words already in the site's own copy: «المحتوى» appears in the
+     Arabic pages; the back-to-top control is a symbol with the page's own
+     "top" wording avoided — aria-label uses the brand-free functional pair. */
+  var TOC_LABEL = IS_AR ? 'المحتوى' : 'Contents';
+  var TOP_LABEL = IS_AR ? 'العودة إلى الأعلى' : 'Back to top';
+
+  /* Wide tables: wrap each in a horizontally scrolling box. Runs before the
+     completion paint below re-renders status tables (their <table> element
+     itself is static markup, so wrapping survives row repaints). */
+  document.querySelectorAll('table').forEach(function (tbl) {
+    if (tbl.parentElement && tbl.parentElement.classList.contains('table-scroll')) return;
+    var wrap = document.createElement('div');
+    wrap.className = 'table-scroll';
+    tbl.parentElement.insertBefore(wrap, tbl);
+    wrap.appendChild(tbl);
+  });
+  paintCompletion();
+
+  /* In-page contents for long article pages (>= 4 section headings). */
+  var article = document.querySelector('article.article') || document.querySelector('.article');
+  if (article) {
+    var headings = [];
+    article.querySelectorAll('h2, h3').forEach(function (h) {
+      if (h.closest('[data-quiz], .quiz, .toc')) return;
+      headings.push(h);
+    });
+    if (headings.length >= 4) {
+      var usedIds = {};
+      document.querySelectorAll('[id]').forEach(function (el) { usedIds[el.id] = true; });
+      function slugFor(text, i) {
+        var s = (text || '').trim().replace(/\s+/g, '-').replace(/[^\p{L}\p{N}-]+/gu, '').replace(/^-+|-+$/g, '');
+        if (!s) s = 'section';
+        s = 'toc-' + s;
+        if (usedIds[s]) s = s + '-' + (i + 1);
+        usedIds[s] = true;
+        return s;
+      }
+      var nav = document.createElement('nav');
+      nav.className = 'toc';
+      nav.setAttribute('aria-label', TOC_LABEL);
+      var toggleBtn = document.createElement('button');
+      toggleBtn.type = 'button';
+      toggleBtn.className = 'toc-toggle';
+      toggleBtn.setAttribute('aria-expanded', 'false');
+      var titleSpan = document.createElement('span');
+      titleSpan.className = 'toc-title';
+      titleSpan.textContent = TOC_LABEL;
+      var chev = document.createElement('span');
+      chev.setAttribute('aria-hidden', 'true');
+      chev.textContent = '▾';
+      toggleBtn.appendChild(titleSpan);
+      toggleBtn.appendChild(chev);
+      var body = document.createElement('div');
+      body.className = 'toc-body';
+      var deskTitle = document.createElement('div');
+      deskTitle.className = 'toc-title';
+      deskTitle.textContent = TOC_LABEL;
+      body.appendChild(deskTitle);
+      var list = document.createElement('ul');
+      list.className = 'toc-list';
+      var currentSub = null;
+      headings.forEach(function (h, i) {
+        if (!h.id) h.id = slugFor(h.textContent, i);
+        var li = document.createElement('li');
+        var a = document.createElement('a');
+        a.href = '#' + h.id;
+        a.textContent = h.textContent;
+        li.appendChild(a);
+        if (h.tagName === 'H3') {
+          if (!currentSub) {
+            currentSub = document.createElement('ul');
+            currentSub.className = 'toc-list toc-sub';
+            list.appendChild(currentSub);
+          }
+          currentSub.appendChild(li);
+        } else {
+          currentSub = null;
+          list.appendChild(li);
+        }
+      });
+      body.appendChild(list);
+      nav.appendChild(toggleBtn);
+      nav.appendChild(body);
+      toggleBtn.addEventListener('click', function () {
+        var open = nav.classList.toggle('open');
+        toggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        chev.textContent = open ? '▴' : '▾';
+      });
+      /* Insert after the page header area: the h1, plus a lead blockquote
+         when one directly follows it (the EN units' intro block). */
+      var anchor = article.querySelector('h1') || article.firstElementChild;
+      var insertAfter = anchor;
+      if (anchor) {
+        var sib = anchor.nextElementSibling;
+        if (sib && sib.tagName === 'BLOCKQUOTE') insertAfter = sib;
+        if (insertAfter && insertAfter.parentNode) insertAfter.parentNode.insertBefore(nav, insertAfter.nextSibling);
+      }
+    }
+  }
+
+  /* Back-to-top: appears after ~600px of scroll, inline-end side. */
+  var topBtn = document.createElement('button');
+  topBtn.type = 'button';
+  topBtn.className = 'back-to-top';
+  topBtn.setAttribute('aria-label', TOP_LABEL);
+  topBtn.setAttribute('title', TOP_LABEL);
+  topBtn.textContent = '↑';
+  document.body.appendChild(topBtn);
+  var ticking = false;
+  function paintTopBtn() {
+    topBtn.classList.toggle('show', window.scrollY > 600);
+    ticking = false;
+  }
+  window.addEventListener('scroll', function () {
+    if (!ticking) { ticking = true; window.requestAnimationFrame(paintTopBtn); }
+  }, { passive: true });
+  paintTopBtn();
+  topBtn.addEventListener('click', function () {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
 })();
