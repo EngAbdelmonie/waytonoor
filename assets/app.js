@@ -768,3 +768,114 @@
     });
   }
 })();
+
+/* WayToNoor — hybrid round (2026-11-27): reveal-on-scroll, the sticky
+   progress header (chips from the page's own headings + a reading
+   track), unit status pills, and the journey progress track.
+   Self-contained: reads the same #page-data blob and the same
+   'wtn.progress.v1' store as the other blocks, and applies the site's
+   own completion maths for the track. */
+(function () {
+  'use strict';
+  var dataEl = document.getElementById('page-data');
+  var PD = {};
+  try { PD = dataEl ? JSON.parse(dataEl.textContent) : {}; } catch (e) { PD = {}; }
+  var S = PD.strings || {};
+  var reduced = window.matchMedia &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- reveal-on-scroll ---------- */
+  var rvEls = document.querySelectorAll('.rv');
+  if (rvEls.length) {
+    if (reduced || !('IntersectionObserver' in window)) {
+      rvEls.forEach(function (el) { el.classList.add('in'); });
+    } else {
+      var io = new IntersectionObserver(function (es) {
+        es.forEach(function (e) {
+          if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+        });
+      }, { threshold: 0.08 });
+      rvEls.forEach(function (el) { io.observe(el); });
+    }
+  }
+
+  /* ---------- unit status pills ---------- */
+  var statusBox = document.querySelector('[data-hy-status]');
+  if (statusBox && PD.quizzes && PD.quizzes.length === 1 &&
+      PD.quizzes[0].kind === 'unit') {
+    var nq = (PD.quizzes[0].questions || []).length;
+    function pill(text, solid) {
+      var s = document.createElement('span');
+      s.className = 'hy-pill' + (solid ? ' solid' : '');
+      s.textContent = text;
+      return s;
+    }
+    if (S.hyState) statusBox.appendChild(pill(S.hyState, true));
+    if (S.hyQuiz && nq) statusBox.appendChild(pill(S.hyQuiz.replace('{n}', nq)));
+    if (S.hyNoGrades) statusBox.appendChild(pill(S.hyNoGrades));
+  }
+
+  /* ---------- sticky progress header (unit / level pages) ---------- */
+  var bar = document.querySelector('[data-hy-progress]');
+  var article = document.querySelector('article.article');
+  if (bar && article) {
+    var chipsBox = bar.querySelector('.hy-chips');
+    var fill = bar.querySelector('.hy-track i');
+    var heads = Array.prototype.slice.call(article.querySelectorAll('h2'));
+    heads.forEach(function (h, i) {
+      if (!h.id) h.id = 'hy-sec-' + (i + 1);
+      var a = document.createElement('a');
+      a.className = 'hy-chip';
+      a.href = '#' + h.id;
+      a.textContent = h.textContent;
+      chipsBox.appendChild(a);
+    });
+    var chips = Array.prototype.slice.call(chipsBox.querySelectorAll('.hy-chip'));
+    function onScroll() {
+      var doc = document.documentElement;
+      var max = doc.scrollHeight - window.innerHeight;
+      var y = window.scrollY || doc.scrollTop;
+      if (fill) fill.style.width =
+        (max > 0 ? Math.min(100, Math.round(y / max * 100)) : 0) + '%';
+      var current = -1;
+      heads.forEach(function (h, i) {
+        if (h.getBoundingClientRect().top < 200) current = i;
+      });
+      chips.forEach(function (c, i) { c.classList.toggle('now', i === current); });
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  }
+
+  /* ---------- journey index progress track ---------- */
+  var jtrack = document.querySelector('[data-hy-jtrack]');
+  if (jtrack) {
+    var jfill = jtrack.querySelector('.track i');
+    function levelComplete(st, info) {
+      if (!info) return false;
+      var sum = 0;
+      for (var i = 1; i <= info.lessons; i++) {
+        var ls = (st.lessons || {})[info.n + '-' + i] || {};
+        if (!ls.practice) return false;
+        if (ls.best === null || ls.best === undefined) return false;
+        sum += ls.best;
+      }
+      return (sum / info.lessons) >= 80;
+    }
+    function paint() {
+      var st = {};
+      try { st = JSON.parse(localStorage.getItem('wtn.progress.v1')) || {}; }
+      catch (e) { st = {}; }
+      var levels = PD.levels || [];
+      var lit = levels.filter(function (info) {
+        return levelComplete(st, info);
+      }).length;
+      if (jfill && levels.length) {
+        jfill.style.width = (lit / levels.length * 100) + '%';
+      }
+    }
+    document.addEventListener('wtn:progress', paint);
+    window.addEventListener('storage', paint);
+    paint();
+  }
+})();

@@ -284,3 +284,207 @@ footer .fl-ar{font-weight:700;color:#fff}
 @media (prefers-reduced-motion: reduce) {
   .mushaf * { scroll-behavior: auto !important; }
 }
+
+/* =====================================================================
+   HYBRID ROUND (2026-11-27) — «مِشكاة × السُّلَّم × ممرّ الفجر».
+   The adopted triple composition, implemented inside the site's OWN
+   palette variables and font stacks (nothing new is introduced):
+   Mishkat = the night bands, star pattern, arch frames, C star-ring
+   medallions; Ladder = progress header/chips, status pills, named
+   states, chunk cards; Fajr = licensed photography, seated ONLY in
+   Mishkat frames (arch mask / gold-ruled band / medallion tile) —
+   never with text over a photo.
+   Gold discipline (WCAG AA): var(--gold) on the night gradient is
+   4.19:1 — large text / numerals / decoration only; small text on
+   night uses #ffe9a8 (8.1:1, an existing literal from .rung.lit) or
+   #fff / #eaf6f2 (existing hero colours); small gold text on light
+   uses #8a6d1f (existing literal, 4.85:1 on white).
+   ===================================================================== */
+
+/* ---------- reveal-on-scroll + motion discipline ---------- */
+/* The hidden start state applies only when JS is live (page_shell adds
+   the .js class to <html>); no-JS visitors see everything, always. */
+.js .rv{opacity:0;transform:translateY(22px);transition:opacity .8s ease,transform .8s ease}
+.js .rv.in{opacity:1;transform:none}
+@media (prefers-reduced-motion: reduce){
+  .js .rv{opacity:1;transform:none;transition:none}
+  html{scroll-behavior:auto}
+}
+
+/* ---------- night band (Mishkat skin) ---------- */
+.hy-night{position:relative;background:linear-gradient(135deg,var(--teal),var(--emerald) 55%,#0e5f52);color:#fff;overflow:hidden}
+.hy-night::before{content:"";position:absolute;inset:0;background:url("../assets/img/pattern-star.svg");background-size:120px;opacity:.12;pointer-events:none}
+.hy-night::after{content:"";position:absolute;inset:0;background:radial-gradient(760px 420px at 50% -80px,rgba(201,164,78,.20),transparent 65%);pointer-events:none}
+.hy-night > *{position:relative;z-index:1}
+.hy-night h1,.hy-night h2{color:#fff}
+.hy-night .crumb{color:#eaf6f2}
+.hy-night .crumb a{color:#ffe9a8}
+.hy-kicker{color:#ffe9a8;font-weight:700;font-size:.92rem}
+.hy-orn{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.hy-orn::before,.hy-orn::after{content:"";height:1.5px;flex:0 0 52px;background:linear-gradient(90deg,transparent,var(--gold))}
+.hy-orn::after{background:linear-gradient(90deg,var(--gold),transparent)}
+.hy-orn .hy-dia{width:9px;height:9px;background:var(--gold);transform:rotate(45deg);flex:0 0 9px}
+
+/* ---------- homepage hero: arch-masked photograph ---------- */
+.hy-hero{padding:64px 0 72px}
+.hy-hero-grid{display:grid;grid-template-columns:1.02fr .98fr;gap:48px;align-items:center}
+@media(max-width:900px){.hy-hero-grid{grid-template-columns:1fr}}
+.hy-hero .lockup-latin{font-size:clamp(2.6rem,6vw,4.2rem)}
+.hy-hero p{color:#eaf6f2;max-width:56ch}
+.hy-hero .tagline{color:#fff}
+.hy-arch{position:relative;margin:0 auto;width:min(440px,92%)}
+.hy-arch::before{content:"";position:absolute;inset:-13px;border:1.5px solid var(--gold);border-radius:236px 236px 20px 20px;opacity:.65;pointer-events:none}
+.hy-arch img{width:100%;height:540px;object-fit:cover;border-radius:224px 224px 14px 14px;border:3px solid var(--gold);display:block;background:var(--sand)}
+@media(max-width:900px){.hy-arch img{height:430px}}
+.hy-cap{display:block;text-align:center;font-size:.8rem;font-weight:700;margin-top:20px;color:#8a6d1f}
+.hy-night .hy-cap{color:#ffe9a8}
+.hy-pauseband .hy-cap{position:static;display:table;margin:10px auto 0;line-height:1.5;background:var(--teal);color:#ffe9a8;padding:6px 14px;border-radius:999px;border:1px solid var(--gold)}
+
+/* ---------- honest stat strip (content counts only) ---------- */
+.hy-stats{border-block:1px solid var(--gold);background:var(--teal)}
+.hy-stats .container{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:24px 20px}
+@media(max-width:640px){.hy-stats .container{grid-template-columns:repeat(2,1fr)}}
+.hy-stat{text-align:center}
+.hy-stat b{display:block;font-family:Georgia,'Noto Naskh Arabic',serif;font-size:clamp(2rem,4.6vw,2.8rem);color:var(--gold);line-height:1.15;font-weight:700}
+.hy-stat span{font-size:.85rem;color:#eaf6f2;font-weight:700}
+
+/* ---------- doorway cards: arch tops + pressable depth ---------- */
+.card.hy-door{border-radius:120px 120px 16px 16px;padding:32px 24px 24px;text-align:center;box-shadow:0 5px 0 var(--sand-dark);transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease}
+.card.hy-door:hover{transform:translateY(-5px);border-color:var(--gold);box-shadow:0 16px 30px -18px rgba(15,76,76,.35)}
+.card.hy-door:active{transform:translateY(2px);box-shadow:0 2px 0 var(--sand-dark)}
+.card.hy-door a.btn::after{border-radius:120px 120px 16px 16px}
+.hy-door .hy-star{width:38px;height:38px;margin:0 auto 8px;color:var(--gold);display:block}
+.hy-door h3,.hy-door h2{margin-top:2px}
+
+/* ---------- photographic breath band (gold-ruled, no text over photo) ---------- */
+.hy-pauseband{position:relative;margin:0;padding-bottom:14px}
+.hy-pauseband::before,.hy-pauseband::after{content:"";position:absolute;inset-inline:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold),transparent);z-index:2}
+.hy-pauseband::before{top:0}.hy-pauseband::after{bottom:0}
+.hy-pauseband img{width:100%;height:320px;object-fit:cover;object-position:center 62%;display:block}
+@media(max-width:640px){.hy-pauseband img{height:230px}}
+
+/* ---------- units rows (home night list + index cards) ---------- */
+.hy-units{display:grid;grid-template-columns:1fr 1fr;gap:2px 56px}
+@media(max-width:820px){.hy-units{grid-template-columns:1fr}}
+.hy-unit-row{display:flex;gap:16px;align-items:baseline;padding:14px 6px;border-bottom:1px solid var(--gold);text-decoration:none;transition:padding .25s ease,background .25s ease}
+.hy-night .hy-unit-row{color:#fff;border-bottom-color:rgba(201,164,78,.35)}
+.hy-unit-row:hover{padding-inline-start:14px;background:rgba(201,164,78,.08)}
+.hy-unit-row b{font-family:Georgia,'Noto Naskh Arabic',serif;font-size:1.65rem;color:var(--gold);min-width:46px;line-height:1;font-weight:700}
+.hy-unit-row span{font-weight:700}
+.hy-unit-card .hy-medal-sm{margin-bottom:10px}
+
+/* ---------- C star medallions ---------- */
+.hy-medal{position:relative;display:grid;place-items:center;width:88px;height:88px;margin:0 auto}
+.hy-medal svg{position:absolute;inset:0;width:100%;height:100%;color:var(--gold)}
+.hy-medal b{font-family:Georgia,'Noto Naskh Arabic',serif;font-size:1.9rem;color:#fff;font-weight:700;line-height:1}
+.hy-medal-sm{position:relative;display:inline-grid;place-items:center;width:52px;height:52px}
+.hy-medal-sm svg{position:absolute;inset:0;width:100%;height:100%;color:var(--gold)}
+.hy-medal-sm b{font-family:Georgia,'Noto Naskh Arabic',serif;font-size:1.15rem;color:var(--teal);font-weight:700;line-height:1}
+.hy-dots{display:flex;gap:7px;justify-content:center;margin-top:16px}
+.hy-dots i{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--gold);opacity:.55}
+.hy-dots i.on{background:var(--gold);opacity:1;box-shadow:0 0 10px rgba(201,164,78,.8)}
+
+/* ---------- page head band (section pages) ---------- */
+.hy-pagehead{padding:44px 0 40px}
+.hy-pagehead h1{margin:0 0 8px}
+.hy-pagehead p{color:#eaf6f2;max-width:70ch;margin:0}
+.hy-pagehead .crumb{margin:0 0 10px}
+
+/* ---------- unit / level head band ---------- */
+.hy-uhead{padding:40px 0 36px;text-align:center}
+.hy-uhead h1{margin:10px 0 4px;font-size:clamp(1.7rem,4.2vw,2.6rem)}
+.hy-uhead .hy-meta{color:#eaf6f2;font-weight:700;font-size:.95rem}
+.hy-status{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:16px}
+.hy-pill{display:inline-block;font-size:.83rem;font-weight:800;padding:5px 14px;border-radius:999px;border:1.5px solid var(--gold);color:#ffe9a8}
+.hy-pill.solid{background:var(--gold);color:var(--teal);border-color:var(--gold)}
+
+/* ---------- sticky progress header (Ladder machinery, JS-filled) ---------- */
+.hy-progress{position:sticky;top:76px;z-index:25;background:#fff;border-bottom:2px solid var(--gold);box-shadow:0 8px 20px -12px rgba(15,76,76,.35)}
+@media(max-width:760px){.hy-progress{top:66px}}
+.hy-progress .container{display:flex;align-items:center;gap:12px;padding-top:8px;padding-bottom:8px}
+.hy-progress .hy-medal-sm{width:40px;height:40px;flex:0 0 40px}
+.hy-progress .hy-medal-sm b{font-size:.95rem}
+.hy-chips{display:flex;gap:8px;overflow-x:auto;padding:4px 2px;scrollbar-width:none;flex:1}
+.hy-chips::-webkit-scrollbar{display:none}
+.hy-chip{white-space:nowrap;border:1px solid var(--line);background:var(--sand);color:var(--teal);border-radius:999px;padding:9px 15px;font-weight:700;font-size:.88rem;text-decoration:none;min-height:44px;display:inline-flex;align-items:center}
+.hy-chip:hover{border-color:var(--gold)}
+.hy-chip.now{background:var(--teal);color:#fff;border-color:var(--teal)}
+.hy-track{height:5px;background:var(--sand-dark)}
+.hy-track i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffe9a8,var(--gold));transition:width .2s ease}
+
+/* ---------- article chunks (Ladder cards over the approved text) ---------- */
+.hy-chunk{background:#fff;border:1px solid var(--line);border-radius:18px;padding:26px 28px;margin:22px 0;box-shadow:0 4px 18px rgba(15,76,76,.05)}
+.hy-chunk > h2:first-child{margin-top:0;border-bottom:2px solid var(--sand-dark);padding-bottom:.3em}
+.hy-chunk.hy-hook{background:var(--sand);border-color:var(--sand-dark)}
+.hy-chunk.hy-hook p:first-of-type{font-size:1.13rem;line-height:1.95}
+.hy-chunk.hy-objectives{background:var(--sand);border:1.5px solid var(--gold)}
+.hy-chunk.hy-objectives li{list-style:none;position:relative}
+.hy-chunk.hy-objectives li::before{content:"✦";color:#8a6d1f;position:absolute;inset-inline-start:-1.35em;font-size:.85em;top:.35em}
+.hy-chunk.hy-summary{background:var(--emerald-light);border-color:var(--line)}
+.hy-chunk .quiz{margin:6px 0 2px}
+fieldset.hy-chunk{display:block}
+.hy-lessons > h2{border-top:2px solid var(--sand-dark);padding-top:1.1em;margin-top:1.6em}
+.hy-lessons > h2:first-of-type{border-top:none;padding-top:0;margin-top:.2em}
+@media(max-width:640px){.hy-chunk{padding:20px 18px}}
+
+/* in-article photo: arch-topped, inside the chunk flow */
+.hy-figure{margin:20px auto;max-width:560px}
+.hy-figure img{width:100%;height:340px;object-fit:cover;border-radius:150px 150px 14px 14px;border:3px solid var(--gold);display:block;background:var(--sand)}
+@media(max-width:640px){.hy-figure img{height:270px}}
+.hy-figure .hy-cap{margin-top:12px}
+
+/* scripture / quote pause frame (existing blockquotes, reframed) */
+.article blockquote{border:1.5px solid var(--gold);border-inline-start:1.5px solid var(--gold);border-radius:56px 56px 12px 12px;background:var(--sand);padding:26px 30px 18px;margin:26px 0;position:relative;text-align:center;font-size:1.12rem}
+.article blockquote::before{content:"✦";position:absolute;top:-11px;inset-inline-start:50%;transform:translateX(50%);background:var(--sand);color:#8a6d1f;padding:0 10px;font-size:1rem;line-height:1}
+[dir="ltr"] .article blockquote::before{transform:translateX(-50%)}
+
+/* quiz card + next-step restyle */
+.quiz{border-top:4px solid var(--gold);border-radius:18px;box-shadow:0 6px 22px rgba(15,76,76,.07)}
+.pager a{border:1.5px solid var(--gold);border-radius:999px;padding:10px 20px;background:#fff;min-height:44px}
+.pager a:hover{background:var(--sand)}
+
+/* ---------- journey: progress track + rung lamps ---------- */
+.hy-jtrack{display:flex;align-items:center;gap:14px;margin:6px 0 22px}
+.hy-jtrack .track{flex:1;height:12px;background:var(--sand);border:1px solid var(--sand-dark);border-radius:99px;overflow:hidden}
+.hy-jtrack .track i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffe9a8,var(--gold));border-radius:99px;transition:width .6s ease}
+.hy-jtrack .hy-medal-sm{width:44px;height:44px;flex:0 0 44px}
+.rung{border-radius:18px;transition:transform .25s ease,box-shadow .25s ease}
+.rung:hover{transform:translateY(-3px);box-shadow:0 14px 26px -18px rgba(15,76,76,.4)}
+.mini-ladder .bar{border-radius:10px 10px 0 0;position:relative}
+.mini-ladder .step.lit .lbl{color:#8a6d1f}
+
+/* ---------- medallion strip (photo tile + text) ---------- */
+.hy-medallion{display:grid;grid-template-columns:300px 1fr;border-radius:20px;overflow:hidden;border:1px solid var(--gold);background:#fff;margin:26px 0}
+@media(max-width:760px){.hy-medallion{grid-template-columns:1fr}}
+.hy-medallion img{width:100%;height:100%;min-height:230px;object-fit:cover;display:block}
+.hy-medallion .in{padding:30px}
+.hy-medallion .in h3{margin-top:0}
+
+/* ---------- mushaf hybrid restyle ---------- */
+.mushaf .hy-pagehead .mushaf-search input{border-radius:999px}
+.surah-row{border-radius:18px;transition:border-color .2s ease,transform .2s ease}
+.surah-row:hover{transform:translateY(-2px)}
+.surah-row .num{background:transparent;border:2px solid var(--gold);color:#8a6d1f;font-family:Georgia,'Noto Naskh Arabic',serif}
+.mushaf-reader .hy-rhead{text-align:center;padding:36px 0 30px}
+.mushaf-reader .hy-rhead h1{margin:6px 0 2px}
+.mushaf-reader .hy-rhead .hy-meta{color:#eaf6f2;font-weight:700}
+.bismillah{border:1.5px solid var(--gold);border-radius:56px 56px 12px 12px;background:var(--sand);padding:20px 26px 12px;position:relative}
+.bismillah::before{content:"✦";position:absolute;top:-11px;inset-inline-start:50%;transform:translateX(50%);background:var(--sand);color:#8a6d1f;padding:0 10px;font-size:1rem;line-height:1}
+[dir="ltr"] .bismillah::before{transform:translateX(-50%)}
+.bismillah-en{text-align:center}
+.ayah-num{background:var(--sand);border-color:var(--gold);color:#8a6d1f}
+.ayah.playing{box-shadow:inset 0 0 0 2px var(--gold)}
+.mushaf-player{border-top:4px solid var(--gold);border-radius:18px}
+.mp-btn.mp-main{background:var(--teal)}
+.surah-row .num{font-size:1.05rem}
+
+.hy-sec-pad{padding:56px 0}
+
+/* ---------- section-head ornament on light sections ---------- */
+.hy-sec-head{margin-bottom:8px}
+.hy-sec-head .hy-orn{margin-bottom:10px}
+
+/* ask / community / about touches */
+.ask-form{border:1px solid var(--line);border-top:4px solid var(--gold);border-radius:18px;padding:24px;background:#fff;box-shadow:0 6px 22px rgba(15,76,76,.06)}
+.about-identity img{border-radius:60px 60px 14px 14px;border:2px solid var(--gold);width:118px;height:118px;object-fit:cover}
+.counter{border-top:4px solid var(--gold)}
