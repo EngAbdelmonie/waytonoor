@@ -489,3 +489,17 @@ fieldset.hy-chunk{display:block}
 .ask-form{border:1px solid var(--line);border-top:4px solid var(--gold);border-radius:18px;padding:24px;background:#fff;box-shadow:0 6px 22px rgba(15,76,76,.06)}
 .about-identity img{border-radius:60px 60px 14px 14px;border:2px solid var(--gold);width:118px;height:118px;object-fit:cover}
 .counter{border-top:4px solid var(--gold)}
+
+/* ---------- WS-B interactivity: micro-checks + key-term reveal cards ---------- */
+.microcheck{border-top:4px solid var(--emerald)}
+.kp-cards{display:grid;gap:10px;margin:1em 0}
+.kp-cols{display:grid;grid-template-columns:1fr 1fr 2fr;gap:12px;padding:0 16px;font-weight:700;color:var(--muted);font-size:.9rem}
+@media(max-width:640px){.kp-cols{display:none}}
+.kp-card{border:1px solid var(--line);border-radius:12px;background:#fff;overflow:hidden}
+.kp-head{width:100%;display:flex;gap:12px;align-items:baseline;background:none;border:none;cursor:pointer;font:inherit;padding:14px 16px;text-align:start;min-height:44px}
+.kp-head:hover{background:var(--sand)}
+.kp-term{font-weight:800;color:var(--teal)}
+.kp-pron{color:var(--muted)}
+.kp-state{margin-inline-start:auto;color:var(--emerald);font-weight:700;font-size:.88rem;white-space:nowrap}
+.kp-body{padding:2px 16px 14px}
+.kp-body[hidden]{display:none}

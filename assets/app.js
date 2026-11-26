@@ -879,3 +879,91 @@
     paint();
   }
 })();
+
+/* WayToNoor — interactivity round (WS-B): mid-lesson micro-checks and
+   key-term tap-to-reveal cards. Self-contained like the blocks above:
+   reads the same #page-data blob and the same 'wtn.progress.v1' store.
+   Micro-checks reuse a subset of the page's OWN quiz questions (from
+   #page-data) with their own authored feedback; answers persist under
+   store.micro and NEVER touch unit-quiz answers, lesson best scores,
+   attempts or the ladder maths. */
+(function () {
+  'use strict';
+  var STORE_KEY = 'wtn.progress.v1';
+  var dataEl = document.getElementById('page-data');
+  var PD = {};
+  try { PD = dataEl ? JSON.parse(dataEl.textContent) : {}; } catch (e) { PD = {}; }
+  var S = PD.strings || {};
+  function load() {
+    try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }
+    catch (e) { return {}; }
+  }
+  function save(st) {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(st)); } catch (e) {}
+    document.dispatchEvent(new CustomEvent('wtn:progress'));
+  }
+
+  /* ---------- mid-lesson / mid-text micro-checks ---------- */
+  document.querySelectorAll('[data-micro]').forEach(function (box) {
+    var qid = box.getAttribute('data-micro');
+    var qidx = parseInt(box.getAttribute('data-qidx'), 10);
+    var quiz = (PD.quizzes || []).filter(function (q) { return q.id === qid; })[0];
+    if (!quiz || !quiz.questions || !quiz.questions[qidx]) return;
+    var q = quiz.questions[qidx];
+    var key = qid + ':' + qidx;
+    var saved = ((load().micro || {})[key]);
+    box.innerHTML = '';
+    var title = document.createElement('h3');
+    title.textContent = S.microTitle || '';
+    box.appendChild(title);
+    var block = document.createElement('div'); block.className = 'q-block';
+    var qt = document.createElement('div'); qt.className = 'q-text';
+    qt.textContent = q.q;
+    block.appendChild(qt);
+    var fb = document.createElement('div'); fb.className = 'feedback';
+    q.options.forEach(function (opt, oi) {
+      var lab = document.createElement('label'); lab.className = 'opt';
+      var inp = document.createElement('input');
+      inp.type = 'radio'; inp.name = 'micro-' + key; inp.value = oi;
+      var span = document.createElement('span'); span.textContent = opt;
+      lab.appendChild(inp); lab.appendChild(span); block.appendChild(lab);
+      if (saved !== undefined && saved !== null) {
+        inp.disabled = true;
+        if (oi === q.correct) lab.classList.add('correct');
+        if (oi === saved && oi !== q.correct) lab.classList.add('wrong');
+        if (oi === saved) inp.checked = true;
+      }
+      inp.addEventListener('change', function () {
+        var st = load(); st.micro = st.micro || {};
+        st.micro[key] = oi; save(st);
+        block.querySelectorAll('label.opt').forEach(function (l, li) {
+          l.querySelector('input').disabled = true;
+          if (li === q.correct) l.classList.add('correct');
+          if (li === oi && oi !== q.correct) l.classList.add('wrong');
+        });
+        fb.textContent = (oi === q.correct ? '✓ ' : '✗ ') + (q.feedback || '');
+        fb.classList.add('show');
+      });
+    });
+    if (saved !== undefined && saved !== null) {
+      fb.textContent = (saved === q.correct ? '✓ ' : '✗ ') + (q.feedback || '');
+      fb.classList.add('show');
+    }
+    block.appendChild(fb);
+    box.appendChild(block);
+  });
+
+  /* ---------- key-term tap-to-reveal cards ---------- */
+  document.querySelectorAll('[data-kp-toggle]').forEach(function (btn) {
+    var card = btn.closest('.kp-card');
+    var body = card ? card.querySelector('.kp-body') : null;
+    var state = btn.querySelector('.kp-state');
+    if (!body) return;
+    btn.addEventListener('click', function () {
+      var open = body.hidden;
+      body.hidden = !open;
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (state) state.textContent = open ? (S.kpHide || '') : (S.kpShow || '');
+    });
+  });
+})();
