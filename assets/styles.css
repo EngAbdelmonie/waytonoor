@@ -189,3 +189,98 @@ footer .fl-ar{font-weight:700;color:#fff}
 /* Round-2: inside .table-scroll the wrapper owns horizontal scrolling, so the
    earlier mobile stopgap (table as its own scroller) is stood down there. */
 @media(max-width:760px){.table-scroll > table{display:table;overflow-x:visible}}
+
+/* Handover to Thiqa: the single additive rule from the placement spec —
+   a gold top border (existing --gold variable) marking the handover
+   card apart from content cards. */
+.handover-card{border-top:4px solid var(--gold)}
+/* WayToNoor — Mushaf section styles (staging).
+   Scoped under .mushaf so nothing leaks into the live stylesheet.
+   Uses ONLY the live site's :root variables (--teal #0f4c4c, --emerald
+   #126a5c, --emerald-light, --sand, --sand-dark, --gold #c9a44e, --ink,
+   --muted, --line, --radius) so the section inherits the site's palette
+   and contrast standard as-is. Integration: append to assets/styles.css
+   (or ship as a second stylesheet linked only by mushaf pages — see
+   INTEGRATION-SPEC.md §4). */
+
+.mushaf .quran-text,
+.mushaf .bismillah,
+.mushaf .surah-name-ar {
+  font-family: "Amiri Quran", "Amiri", "Scheherazade New", "Noto Naskh Arabic", serif;
+}
+
+/* ---------- index ---------- */
+.mushaf-search { margin: 22px 0 6px; }
+.mushaf-search input {
+  width: 100%; min-height: 52px; padding: 12px 18px; font: inherit;
+  border: 1px solid var(--line); border-radius: 999px; background: #fff;
+}
+.mushaf-search input:focus-visible { outline: 3px solid var(--emerald); outline-offset: 2px; }
+.surah-list { list-style: none; margin: 18px 0 0; padding: 0; display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+.surah-row { background: #fff; border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 14px 16px; display: flex; align-items: center; gap: 14px; }
+.surah-row:hover { border-color: var(--emerald); }
+.surah-row .num { display: inline-flex; width: 42px; height: 42px; flex: 0 0 42px;
+  border-radius: 50%; background: var(--emerald-light); color: var(--teal);
+  align-items: center; justify-content: center; font-weight: 800; }
+.surah-row .names { flex: 1; min-width: 0; line-height: 1.45; }
+.surah-row .surah-name-ar { font-size: 1.45rem; color: var(--teal); display: block; }
+.surah-row .surah-name-en { font-weight: 700; display: block; }
+.surah-row .meta { color: var(--muted); font-size: .88rem; display: block; }
+.surah-row a.row-link { text-decoration: none; color: inherit; display: flex;
+  align-items: center; gap: 14px; flex: 1; min-height: 44px; }
+.surah-empty { display: none; margin-top: 16px; }
+
+/* ---------- reader ---------- */
+.bismillah { text-align: center; font-size: 2rem; line-height: 1.9;
+  color: var(--teal); margin: 18px 0 6px; }
+.bismillah-en { text-align: center; color: var(--muted); margin: 0 0 10px; font-size: .98rem; }
+.mushaf-text { margin-top: 10px; }
+.ayah { border-bottom: 1px dashed var(--line); padding: 14px 10px; margin: 0;
+  border-radius: 10px; cursor: pointer; }
+.ayah:last-of-type { border-bottom: none; }
+.ayah:hover { background: var(--sand); }
+.ayah.playing { background: var(--emerald-light); box-shadow: inset 0 0 0 2px var(--emerald); }
+.ayah-ar { font-family: "Amiri Quran", "Amiri", "Scheherazade New", "Noto Naskh Arabic", serif;
+  font-size: 1.85rem; line-height: 2.15; color: var(--ink); }
+.ayah-num { display: inline-flex; width: 2em; height: 2em; margin-inline-start: 8px;
+  border: 1.5px solid var(--gold); border-radius: 50%; color: var(--teal);
+  font-family: inherit; font-size: 1rem; font-weight: 700;
+  align-items: center; justify-content: center; vertical-align: middle;
+  background: #fff; }
+.ayah-en { display: block; margin-top: 8px; color: var(--muted);
+  font-size: 1.02rem; line-height: 1.7; }
+.mushaf.hide-en .ayah-en { display: none; }
+.ayah-play { float: inline-end; min-width: 44px; min-height: 44px; border-radius: 50%;
+  border: 1px solid var(--line); background: #fff; color: var(--teal);
+  font-size: 1rem; cursor: pointer; }
+.ayah-play:hover { border-color: var(--emerald); background: var(--emerald-light); }
+
+/* ---------- player bar ---------- */
+.mushaf-player { position: sticky; bottom: 12px; z-index: 20; margin: 22px 0;
+  background: #fff; border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: 0 10px 30px rgba(15, 76, 76, .14); padding: 14px 16px; }
+.mushaf-player .mp-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.mp-btn { min-height: 48px; padding: 10px 18px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--sand); color: var(--teal);
+  font: inherit; font-weight: 700; }
+.mp-btn:hover { border-color: var(--emerald); }
+.mp-btn.mp-main { background: var(--teal); color: #fff; border-color: transparent; }
+.mp-btn[disabled] { opacity: .55; cursor: not-allowed; }
+.mushaf-player label { font-weight: 600; display: inline-flex; gap: 8px; align-items: center; }
+.mushaf-player select { min-height: 48px; font: inherit; padding: 8px 12px;
+  border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+.mp-now { margin: 10px 0 0; font-weight: 700; color: var(--teal); }
+.mp-credit { margin: 4px 0 0; color: var(--muted); font-size: .92rem; }
+.mp-error { margin: 8px 0 0; color: var(--danger); font-weight: 600; }
+
+.mushaf-credits { margin-top: 34px; }
+@media (max-width: 640px) {
+  .ayah-ar { font-size: 1.6rem; line-height: 2.05; }
+  .bismillah { font-size: 1.7rem; }
+  .mushaf-player { bottom: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mushaf * { scroll-behavior: auto !important; }
+}

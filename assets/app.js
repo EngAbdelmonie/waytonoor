@@ -545,3 +545,226 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 })();
+
+/* WayToNoor — Thiqa handover, ladder-top reveal (integration round).
+   The journey index carries the graduation handover card inside
+   [data-ladder-top], hidden until every rung is lit. This block is
+   self-contained: it reads the same stored progress ('wtn.progress.v1')
+   and the same page-data lesson counts, and applies the site's own
+   completion maths (every lesson practised, best scores averaging
+   at least 80) — the same rule paintLadders uses for the rungs. */
+(function () {
+  'use strict';
+  var box = document.querySelector('[data-ladder-top]');
+  if (!box) return;
+  var dataEl = document.getElementById('page-data');
+  var PD = {};
+  try { PD = dataEl ? JSON.parse(dataEl.textContent) : {}; } catch (e) { PD = {}; }
+  function levelComplete(st, info) {
+    if (!info) return false;
+    var sum = 0;
+    for (var i = 1; i <= info.lessons; i++) {
+      var ls = (st.lessons || {})[info.n + '-' + i] || {};
+      if (!ls.practice) return false;
+      if (ls.best === null || ls.best === undefined) return false;
+      sum += ls.best;
+    }
+    return (sum / info.lessons) >= 80;
+  }
+  function check() {
+    var st = {};
+    try { st = JSON.parse(localStorage.getItem('wtn.progress.v1')) || {}; } catch (e) { st = {}; }
+    var levels = PD.levels || [];
+    var all = levels.length === 5 && levels.every(function (info) { return levelComplete(st, info); });
+    box.style.display = all ? '' : 'none';
+  }
+  document.addEventListener('wtn:progress', check);
+  window.addEventListener('storage', check);
+  check();
+})();
+/* WayToNoor — Mushaf reader player (staging).
+   Mirrors the Thiqa platform's mushaf behaviour (lib/quran.js +
+   MushafReader.js): per-ayah audio streamed from the Islamic Network
+   CDN, keyed by the ayah's GLOBAL number (1..6236); four real recorded
+   murattal recitations, Alafasy the default; a failed file on another
+   reciter falls back once to Alafasy for that ayah; the reciter choice
+   persists in localStorage. Audio is streamed by the visitor's browser
+   at play time — never downloaded, hosted or proxied by the site.
+   Recitation is a real human recording only; nothing is synthesised
+   and no music ever plays under it.
+
+   The reader page renders its ayahs at build time (each .ayah carries
+   data-n and data-g); this script only drives playback + highlighting.
+   Deliberate difference from Thiqa: repeat defaults to x1 (WayToNoor
+   is a reading/listening site for new Muslims, not a memorisation
+   tool); the x3/x5/x10 control is present, as on Thiqa. */
+(function () {
+  "use strict";
+
+  var RECITERS = [
+    { id: "alafasy",    edition: "ar.alafasy",           bitrate: 128, name_ar: "مشاري راشد العفاسي",  name_en: "Mishary Rashid Alafasy" },
+    { id: "minshawi",   edition: "ar.minshawi",          bitrate: 128, name_ar: "محمد صديق المنشاوي",  name_en: "Mohamed Siddiq El-Minshawi" },
+    { id: "husary",     edition: "ar.husary",            bitrate: 128, name_ar: "محمود خليل الحصري",   name_en: "Mahmoud Khalil Al-Husary" },
+    { id: "abdulbasit", edition: "ar.abdulbasitmurattal", bitrate: 64, name_ar: "عبد الباسط عبد الصمد", name_en: "Abdul Basit Abdul Samad" }
+  ];
+  var STORAGE_KEY = "wtn_reciter";
+  var FALLBACK = RECITERS[0];
+
+  function urlFor(reciter, g) {
+    return "https://cdn.islamic.network/quran/audio/" + reciter.bitrate + "/" + reciter.edition + "/" + g + ".mp3";
+  }
+
+  /* ---------------- reader pages ---------------- */
+  var root = document.querySelector(".mushaf-reader");
+  if (root) {
+    var lang = root.getAttribute("data-lang") || "ar";
+    var ayahs = Array.prototype.slice.call(root.querySelectorAll(".ayah"));
+    var audio = root.querySelector(".mp-audio");
+    var btnToggle = root.querySelector('[data-action="toggle"]');
+    var btnStop = root.querySelector('[data-action="stop"]');
+    var btnPrev = root.querySelector('[data-action="prev"]');
+    var btnNext = root.querySelector('[data-action="next"]');
+    var selRepeat = root.querySelector(".mp-repeat");
+    var selReciter = root.querySelector(".mp-reciter");
+    var nowLine = root.querySelector(".mp-now");
+    var creditName = root.querySelector(".mp-reciter-name");
+    var errLine = root.querySelector(".mp-error");
+    var enToggle = root.querySelector(".mp-en-toggle input");
+
+    var state = { idx: -1, playing: false, repeatLeft: 0, fellBack: false };
+    var reciter = FALLBACK;
+    try {
+      var saved = window.localStorage.getItem(STORAGE_KEY);
+      for (var i = 0; i < RECITERS.length; i++) if (RECITERS[i].id === saved) reciter = RECITERS[i];
+    } catch (e) { /* storage unavailable — default stays */ }
+    if (selReciter) {
+      selReciter.value = reciter.id;
+      updateCredit();
+      selReciter.addEventListener("change", function () {
+        stopAll();
+        for (var j = 0; j < RECITERS.length; j++) if (RECITERS[j].id === selReciter.value) reciter = RECITERS[j];
+        try { window.localStorage.setItem(STORAGE_KEY, reciter.id); } catch (e) {}
+        updateCredit();
+      });
+    }
+    function updateCredit() {
+      if (creditName) creditName.textContent = lang === "ar" ? reciter.name_ar : reciter.name_en;
+    }
+    function repeatTimes() { return selRepeat ? parseInt(selRepeat.value, 10) || 1 : 1; }
+
+    function setHighlight() {
+      ayahs.forEach(function (el, i) { el.classList.toggle("playing", i === state.idx && state.playing); });
+      if (state.idx >= 0 && ayahs[state.idx]) {
+        var el = ayahs[state.idx];
+        if (nowLine) {
+          nowLine.textContent = (lang === "ar" ? "الآية " : "Ayah ") + el.getAttribute("data-n");
+        }
+        var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        el.scrollIntoView({ block: "center", behavior: reduce ? "auto" : "smooth" });
+      } else if (nowLine) {
+        nowLine.textContent = "";
+      }
+    }
+
+    function playIdx(idx, times) {
+      if (idx < 0 || idx >= ayahs.length) { stopAll(); return; }
+      state.idx = idx;
+      state.repeatLeft = times || repeatTimes();
+      state.fellBack = false;
+      state.playing = true;
+      if (errLine) errLine.textContent = "";
+      audio.src = urlFor(reciter, ayahs[idx].getAttribute("data-g"));
+      var p = audio.play();
+      if (p && p.catch) p.catch(handleError);
+      setHighlight();
+      syncToggleLabel();
+    }
+
+    function handleError() {
+      if (!state.fellBack && reciter.id !== FALLBACK.id && state.idx >= 0) {
+        state.fellBack = true;
+        audio.src = urlFor(FALLBACK, ayahs[state.idx].getAttribute("data-g"));
+        var p = audio.play();
+        if (p && p.catch) p.catch(showError);
+        return;
+      }
+      showError();
+    }
+    function showError() {
+      state.playing = false;
+      if (errLine) {
+        errLine.textContent = lang === "ar"
+          ? "تعذّر تشغيل التلاوة — تحقّق من اتصالك ثم حاول مرة أخرى."
+          : "The recitation could not be played — check your connection and try again.";
+      }
+      setHighlight(); syncToggleLabel();
+    }
+
+    function stopAll() {
+      audio.pause();
+      state.playing = false;
+      state.repeatLeft = 0;
+      setHighlight(); syncToggleLabel();
+    }
+    function syncToggleLabel() {
+      if (!btnToggle) return;
+      var playing = state.playing && !audio.paused;
+      btnToggle.textContent = playing
+        ? (lang === "ar" ? "⏸ إيقاف مؤقت" : "⏸ Pause")
+        : (lang === "ar" ? "▶ تشغيل السورة" : "▶ Play the surah");
+    }
+
+    if (audio) {
+      audio.addEventListener("ended", function () {
+        if (state.repeatLeft > 1) {
+          state.repeatLeft -= 1;
+          audio.currentTime = 0;
+          var p = audio.play(); if (p && p.catch) p.catch(handleError);
+          return;
+        }
+        if (state.idx + 1 < ayahs.length) playIdx(state.idx + 1, repeatTimes());
+        else stopAll();
+      });
+      audio.addEventListener("error", function () { if (state.playing) handleError(); });
+      audio.addEventListener("pause", syncToggleLabel);
+      audio.addEventListener("play", syncToggleLabel);
+    }
+    if (btnToggle) btnToggle.addEventListener("click", function () {
+      if (state.playing && !audio.paused) { audio.pause(); return; }
+      if (state.idx >= 0 && audio.src) { var p = audio.play(); if (p && p.catch) p.catch(handleError); state.playing = true; setHighlight(); return; }
+      playIdx(0, repeatTimes());
+    });
+    if (btnStop) btnStop.addEventListener("click", stopAll);
+    if (btnPrev) btnPrev.addEventListener("click", function () { playIdx(Math.max(0, (state.idx < 0 ? 0 : state.idx - 1)), repeatTimes()); });
+    if (btnNext) btnNext.addEventListener("click", function () { playIdx(Math.min(ayahs.length - 1, state.idx + 1), repeatTimes()); });
+    ayahs.forEach(function (el, i) {
+      el.addEventListener("click", function (ev) {
+        if (ev.target.closest && ev.target.closest("a,button,select,input,label")) return;
+        playIdx(i, repeatTimes());
+      });
+      var b = el.querySelector(".ayah-play");
+      if (b) b.addEventListener("click", function () { playIdx(i, repeatTimes()); });
+    });
+    if (enToggle) enToggle.addEventListener("change", function () {
+      root.classList.toggle("hide-en", !enToggle.checked);
+    });
+  }
+
+  /* ---------------- index page: live search ---------------- */
+  var search = document.querySelector(".mushaf-search input");
+  if (search) {
+    var rows = Array.prototype.slice.call(document.querySelectorAll(".surah-row"));
+    var empty = document.querySelector(".surah-empty");
+    search.addEventListener("input", function () {
+      var q = search.value.trim().toLowerCase();
+      var shown = 0;
+      rows.forEach(function (row) {
+        var hay = (row.getAttribute("data-search") || "").toLowerCase();
+        var hit = !q || hay.indexOf(q) !== -1;
+        row.style.display = hit ? "" : "none";
+        if (hit) shown++;
+      });
+      if (empty) empty.style.display = shown ? "none" : "block";
+    });
+  }
+})();
