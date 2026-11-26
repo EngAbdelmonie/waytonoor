@@ -388,6 +388,7 @@ footer .fl-ar{font-weight:700;color:#fff}
 .hy-pagehead{padding:44px 0 40px}
 .hy-pagehead h1{margin:0 0 8px}
 .hy-pagehead p{color:#eaf6f2;max-width:70ch;margin:0}
+.hy-pagehead a{color:#ffe9a8;text-decoration:underline;text-underline-offset:3px}
 .hy-pagehead .crumb{margin:0 0 10px}
 
 /* ---------- unit / level head band ---------- */
@@ -465,7 +466,7 @@ fieldset.hy-chunk{display:block}
 .surah-row{border-radius:18px;transition:border-color .2s ease,transform .2s ease}
 .surah-row:hover{transform:translateY(-2px)}
 .surah-row .num{background:transparent;border:2px solid var(--gold);color:#8a6d1f;font-family:Georgia,'Noto Naskh Arabic',serif}
-.mushaf-reader .hy-rhead{text-align:center;padding:36px 0 30px}
+.mushaf-reader .hy-rhead{text-align:center;padding:38px 22px 32px;border-radius:20px;margin-bottom:26px}
 .mushaf-reader .hy-rhead h1{margin:6px 0 2px}
 .mushaf-reader .hy-rhead .hy-meta{color:#eaf6f2;font-weight:700}
 .bismillah{border:1.5px solid var(--gold);border-radius:56px 56px 12px 12px;background:var(--sand);padding:20px 26px 12px;position:relative}
