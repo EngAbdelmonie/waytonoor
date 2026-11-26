@@ -967,3 +967,64 @@
     });
   });
 })();
+
+/* WayToNoor — WS-B (iv): per-page reading progress, stored locally.
+   Section-based: a section (an article <h2>, mirrored by the sticky
+   header's chips) counts as read once its heading has passed the
+   viewport's middle. Read sections and the percentage live in
+   'wtn.reading.v1' keyed by page path; on a revisit the chips of
+   already-read sections carry the .read state and the track shows a
+   ghost marker at the furthest percentage reached in earlier visits.
+   Nothing leaves the browser; no scores or ladder state are touched. */
+(function () {
+  'use strict';
+  var KEY = 'wtn.reading.v1';
+  var bar = document.querySelector('[data-hy-progress]');
+  var article = document.querySelector('article.article');
+  if (!bar || !article) return;
+  var heads = Array.prototype.slice.call(article.querySelectorAll('h2'));
+  var chips = Array.prototype.slice.call(bar.querySelectorAll('.hy-chip'));
+  if (!heads.length || !chips.length) return;
+  var ghost = bar.querySelector('.hy-ghost');
+  var path = window.location.pathname;
+  function loadAll() {
+    try { return JSON.parse(localStorage.getItem(KEY)) || {}; }
+    catch (e) { return {}; }
+  }
+  var entry = loadAll()[path] || { pct: 0, secs: [] };
+  var read = {};
+  (entry.secs || []).forEach(function (id) { read[id] = true; });
+  function paintChips() {
+    heads.forEach(function (h, i) {
+      if (chips[i]) chips[i].classList.toggle('read', !!read[h.id]);
+    });
+  }
+  if (entry.pct > 0 && ghost) {
+    ghost.hidden = false;
+    ghost.style.insetInlineStart = Math.min(100, entry.pct) + '%';
+  }
+  paintChips();
+  var ticking = false;
+  function update() {
+    ticking = false;
+    var mid = window.innerHeight * 0.55;
+    var changed = false;
+    heads.forEach(function (h) {
+      if (!read[h.id] && h.getBoundingClientRect().top < mid) {
+        read[h.id] = true; changed = true;
+      }
+    });
+    var pct = Math.round(Object.keys(read).length / heads.length * 100);
+    if (pct > (entry.pct || 0)) { entry.pct = pct; changed = true; }
+    if (changed) {
+      entry.secs = Object.keys(read);
+      var all = loadAll(); all[path] = entry;
+      try { localStorage.setItem(KEY, JSON.stringify(all)); } catch (e) {}
+      paintChips();
+    }
+  }
+  window.addEventListener('scroll', function () {
+    if (!ticking) { ticking = true; window.requestAnimationFrame(update); }
+  }, { passive: true });
+  update();
+})();

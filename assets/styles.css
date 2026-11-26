@@ -503,3 +503,11 @@ fieldset.hy-chunk{display:block}
 .kp-state{margin-inline-start:auto;color:var(--emerald);font-weight:700;font-size:.88rem;white-space:nowrap}
 .kp-body{padding:2px 16px 14px}
 .kp-body[hidden]{display:none}
+
+/* ---------- WS-B (iv): reading-progress states ---------- */
+.hy-track{position:relative}
+.hy-ghost{position:absolute;top:-3px;width:3px;height:11px;margin-inline-start:-1px;background:var(--teal);opacity:.55;border-radius:2px}
+.hy-chip.read{border-color:var(--gold);background:#fff8e1}
+.hy-chip.read::after{content:"✓";color:#8a6d1f;font-weight:800}
+.practice input[type=checkbox]{width:20px;height:20px;flex:0 0 20px;accent-color:var(--emerald)}
+.checklist input[type=checkbox]{width:20px;height:20px;flex:0 0 20px;margin-top:4px;accent-color:var(--emerald)}
