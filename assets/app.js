@@ -354,37 +354,62 @@
     }).catch(function () { /* file unreadable: keep the transparency note visible */ });
   });
 
-  /* ---------- ask-a-human: anonymous entry that graduates to a name ---------- */
-  var chatForm = document.querySelector('[data-chat-form]');
-  if (chatForm) {
-    var log = document.querySelector('[data-chat-log]');
-    var input = chatForm.querySelector('input');
-    var graduated = false;
-    chatForm.addEventListener('submit', function (ev) {
+  /* ---------- ask-a-human: question form (form-to-email endpoint) ---------- */
+  var askForm = document.querySelector('[data-ask-form]');
+  if (askForm) {
+    var askStatus = askForm.querySelector('[data-ask-status]');
+    var askBtn = askForm.querySelector('button[type="submit"]');
+    function showAskStatus(msg, isError) {
+      if (!askStatus) return;
+      askStatus.textContent = msg;
+      askStatus.style.display = '';
+      askStatus.classList.toggle('error', !!isError);
+    }
+    askForm.addEventListener('submit', function (ev) {
       ev.preventDefault();
-      var text = (input.value || '').trim();
-      if (!text) return;
-      var mine = document.createElement('div'); mine.className = 'msg visitor'; mine.textContent = text;
-      log.appendChild(mine); input.value = '';
-      if (!graduated) {
-        graduated = true;
-        var sys = document.createElement('div'); sys.className = 'msg system';
-        var tag = document.createElement('span'); tag.className = 'sys-tag'; tag.textContent = S.autoNoteTag;
-        var body = document.createElement('span'); body.textContent = S.autoNoteBody;
-        sys.appendChild(tag); sys.appendChild(body); log.appendChild(sys);
-        var grad = document.querySelector('[data-graduate]');
-        if (grad) grad.classList.add('show');
+      var endpoint = askForm.getAttribute('data-endpoint') || '';
+      var emailEl = askForm.querySelector('[name="email"]');
+      var qEl = askForm.querySelector('[name="question"]');
+      var email = (emailEl.value || '').trim();
+      var question = (qEl.value || '').trim();
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !question) {
+        showAskStatus(S.askInvalid, true);
+        return;
       }
-      log.scrollTop = log.scrollHeight;
-    });
-    var gradForm = document.querySelector('[data-graduate-form]');
-    if (gradForm) gradForm.addEventListener('submit', function (ev) {
-      ev.preventDefault();
-      var done = document.querySelector('[data-graduate-done]');
-      if (done) done.style.display = '';
-      gradForm.querySelectorAll('input,select,textarea,button').forEach(function (el) { el.disabled = true; });
+      if (endpoint.indexOf('OWNER_INBOX_PENDING') !== -1) {
+        /* Interim state: reception is not connected yet — never fake a send. */
+        showAskStatus(S.askPending, true);
+        return;
+      }
+      var payload = {
+        name: (askForm.querySelector('[name="name"]').value || '').trim(),
+        email: email,
+        topic: askForm.querySelector('[name="topic"]').value,
+        question: question,
+        _subject: 'WayToNoor — new question / سؤال جديد'
+      };
+      askBtn.disabled = true;
+      showAskStatus(S.askSending, false);
+      fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(function (r) {
+        if (!r.ok) throw new Error('send failed');
+        askForm.reset();
+        showAskStatus(S.askSent, false);
+      }).catch(function () {
+        showAskStatus(S.askError, true);
+      }).then(function () { askBtn.disabled = false; });
     });
   }
+  var gradForm = document.querySelector('[data-graduate-form]');
+  if (gradForm) gradForm.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var done = document.querySelector('[data-graduate-done]');
+    if (done) done.style.display = '';
+    gradForm.querySelectorAll('input,select,textarea,button').forEach(function (el) { el.disabled = true; });
+  });
 
   /* ---------- wire everything ---------- */
   (PD.quizzes || []).forEach(function (quiz) {
