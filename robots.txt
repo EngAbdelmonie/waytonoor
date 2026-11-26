@@ -1,3 +1,3 @@
 User-agent: *
 Allow: /
-Sitemap: https://engabdelmonie.github.io/waytonoor/sitemap.xml
+Sitemap: https://waytonoor.com/sitemap.xml
