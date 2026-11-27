@@ -118,7 +118,7 @@ table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;ove
 .checklist label{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
 .status-table td .ok{color:var(--ok);font-weight:800}.status-table td .no{color:var(--danger);font-weight:700}
 .lock-banner{background:#f3f3f3;border:1px dashed #bbb;border-radius:12px;padding:16px 18px;margin:20px 0;color:#555}
-fieldset{border:none;padding:0;margin:0}
+fieldset{border:none;padding:0;margin:0;min-width:0}
 fieldset[disabled] .quiz,fieldset[disabled] .practice{opacity:.55;pointer-events:none}
 
 /* Counters */
@@ -189,6 +189,10 @@ footer .fl-ar{font-weight:700;color:#fff}
 /* Round-2: inside .table-scroll the wrapper owns horizontal scrolling, so the
    earlier mobile stopgap (table as its own scroller) is stood down there. */
 @media(max-width:760px){.table-scroll > table{display:table;overflow-x:visible}}
+/* Post-merge UI/UX round: on phones, wrapped tables (e.g. the doorway
+   objections tables) tighten slightly so they fit the wrapper instead of
+   slicing the last column mid-word. Presentation only. */
+@media(max-width:760px){.table-scroll>table{font-size:.93rem}.table-scroll>table th,.table-scroll>table td{padding:8px 9px;overflow-wrap:anywhere}}
 
 /* Handover to Thiqa: the single additive rule from the placement spec —
    a gold top border (existing --gold variable) marking the handover
@@ -522,10 +526,10 @@ fieldset.hy-chunk{display:block}
 .matchdrill{border-top:4px solid var(--gold)}
 .md-hint{color:var(--muted);font-size:.95rem;margin:.2em 0 .6em}
 .md-progress{font-weight:700;color:var(--teal);margin:.4em 0}
-.md-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0}
+.md-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin:10px 0}
 @media(max-width:640px){.md-cols{gap:8px}}
 .md-col{display:grid;gap:8px;align-content:start}
-.md-item{font:inherit;text-align:start;padding:12px 14px;min-height:48px;border:1px solid var(--line);border-radius:10px;background:var(--white);color:var(--ink);cursor:pointer}
+.md-item{font:inherit;text-align:start;padding:12px 14px;min-height:48px;border:1px solid var(--line);border-radius:10px;background:var(--white);color:var(--ink);cursor:pointer;overflow-wrap:anywhere}
 .md-item:hover{border-color:var(--emerald)}
 .md-item.sel{border-color:var(--teal);background:var(--sand);box-shadow:inset 0 0 0 2px var(--teal)}
 .md-item.matched{border-color:var(--ok);background:var(--emerald-light);cursor:default}
