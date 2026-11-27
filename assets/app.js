@@ -1028,3 +1028,162 @@
   }, { passive: true });
   update();
 })();
+
+/* WayToNoor — matching drill (تدريب مطابقة): a shuffle-and-match
+   exercise built EXCLUSIVELY from the page's own key-term card pairs,
+   carried verbatim in #page-data as PD.terms (term / pronunciation /
+   meaning — the exact inner HTML of the tap-to-reveal cards above it).
+   No new terms, no new meanings, nothing authored here. Results live
+   ONLY under their own store key 'wtn.match.v1': this block never
+   reads or writes 'wtn.progress.v1' or 'wtn.reading.v1' and never
+   dispatches 'wtn:progress', so quiz scores, micro-checks, reading
+   progress and the ladder maths cannot be affected by it. */
+(function () {
+  'use strict';
+  var KEY = 'wtn.match.v1';
+  var box = document.querySelector('[data-matchdrill]');
+  if (!box) return;
+  var dataEl = document.getElementById('page-data');
+  var PD = {};
+  try { PD = dataEl ? JSON.parse(dataEl.textContent) : {}; } catch (e) { PD = {}; }
+  var S = PD.strings || {};
+  var terms = PD.terms || [];
+  if (terms.length < 2) return;
+  var path = window.location.pathname;
+
+  function loadAll() {
+    try { return JSON.parse(localStorage.getItem(KEY)) || {}; }
+    catch (e) { return {}; }
+  }
+  function record(done) {
+    var all = loadAll();
+    all[path] = { done: !!done, total: terms.length };
+    try { localStorage.setItem(KEY, JSON.stringify(all)); } catch (e) {}
+  }
+  function shuffle(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  var title = document.createElement('h3');
+  title.textContent = S.matchTitle || '';
+  var hint = document.createElement('p');
+  hint.className = 'md-hint';
+  hint.textContent = S.matchHint || '';
+  var progress = document.createElement('p');
+  progress.className = 'md-progress';
+  var cols = document.createElement('div');
+  cols.className = 'md-cols';
+  var fb = document.createElement('div');
+  fb.className = 'feedback';
+  var again = document.createElement('button');
+  again.type = 'button';
+  again.className = 'btn btn-sand md-again';
+  again.textContent = S.matchAgain || '';
+  again.hidden = true;
+  box.appendChild(title);
+  box.appendChild(hint);
+  box.appendChild(progress);
+  box.appendChild(cols);
+  box.appendChild(fb);
+  box.appendChild(again);
+
+  var selected = null;   // pair index of the currently selected term
+  var matched = {};      // pair index -> true
+  var matchedCount = 0;
+
+  function paintProgress() {
+    progress.textContent = (S.matchProgress || '')
+      .replace('{done}', matchedCount).replace('{total}', terms.length);
+  }
+
+  function build() {
+    selected = null;
+    matched = {};
+    matchedCount = 0;
+    fb.textContent = '';
+    fb.classList.remove('show');
+    again.hidden = true;
+    cols.innerHTML = '';
+    var termCol = document.createElement('div');
+    termCol.className = 'md-col';
+    var meanCol = document.createElement('div');
+    meanCol.className = 'md-col';
+    terms.forEach(function (pair, i) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'md-item md-term';
+      b.setAttribute('data-pair', i);
+      b.setAttribute('aria-pressed', 'false');
+      b.innerHTML = '<span class="kp-term">' + pair.t + '</span> ' +
+                    '<span class="kp-pron">' + pair.p + '</span>';
+      b.addEventListener('click', function () { pickTerm(i, b); });
+      termCol.appendChild(b);
+    });
+    shuffle(terms.map(function (_p, i) { return i; })).forEach(function (i) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'md-item md-mean';
+      b.setAttribute('data-pair', i);
+      b.innerHTML = terms[i].m;
+      b.addEventListener('click', function () { pickMeaning(i, b); });
+      meanCol.appendChild(b);
+    });
+    cols.appendChild(termCol);
+    cols.appendChild(meanCol);
+    paintProgress();
+  }
+
+  function clearWrong() {
+    cols.querySelectorAll('.md-item.wrong').forEach(function (el) {
+      el.classList.remove('wrong');
+    });
+  }
+
+  function pickTerm(i, btn) {
+    if (matched[i]) return;
+    clearWrong();
+    selected = i;
+    cols.querySelectorAll('.md-term').forEach(function (el) {
+      var on = parseInt(el.getAttribute('data-pair'), 10) === i;
+      el.classList.toggle('sel', on);
+      el.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    if (btn) btn.classList.add('sel');
+  }
+
+  function pickMeaning(i, btn) {
+    if (matched[i] || selected === null) return;
+    clearWrong();
+    if (i === selected) {
+      matched[i] = true;
+      matchedCount += 1;
+      cols.querySelectorAll('[data-pair="' + i + '"]').forEach(function (el) {
+        el.classList.add('matched');
+        el.classList.remove('sel');
+        el.disabled = true;
+        el.setAttribute('aria-pressed', 'false');
+      });
+      selected = null;
+      fb.textContent = '✓';
+      fb.classList.add('show');
+      paintProgress();
+      if (matchedCount === terms.length) {
+        fb.textContent = S.matchDone || '✓';
+        record(true);
+        again.hidden = false;
+      }
+    } else {
+      btn.classList.add('wrong');
+      fb.textContent = '✗';
+      fb.classList.add('show');
+    }
+  }
+
+  again.addEventListener('click', build);
+  build();
+})();
