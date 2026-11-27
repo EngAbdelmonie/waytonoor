@@ -1,6 +1,9 @@
-/* WayToNoor — client behaviour. No tracking, no external calls except the
-   local statistics file. All progress lives in this browser only
-   (localStorage); there are no accounts and no server in this phase. */
+/* WayToNoor — client behaviour. No external calls except the local
+   statistics file and — only when the owner has activated it in the
+   build (ANALYTICS_MEASUREMENT_ID) — the GA4 tag, which the analytics
+   block below feeds with category-only events. All progress lives in
+   this browser only (localStorage); there are no accounts and no
+   server in this phase. */
 (function () {
   'use strict';
   var STORE_KEY = 'wtn.progress.v1';
@@ -8,6 +11,88 @@
   var PD = {};
   try { PD = dataEl ? JSON.parse(dataEl.textContent) : {}; } catch (e) { PD = {}; }
   var S = (PD.strings || {});
+
+  /* ---------- internal analytics (GA4) ----------
+     wtnTrack is the single door for every event. It is INERT unless the
+     gtag.js snippet is present on the page — and the build emits that
+     snippet only when the owner has set a Measurement ID, so with
+     analytics off this costs one typeof check per call and sends
+     nothing anywhere. Event parameters are fixed categories and
+     numbers from the site's own structure (doorway slug, unit number,
+     score BAND, surah number, reciter id): never personal data, never
+     quiz answers, never anything the visitor typed. The statistics
+     are internal to the project and never published on the site. */
+  window.wtnTrack = function (name, params) {
+    try {
+      if (typeof window.gtag !== 'function') return;
+      var p = {};
+      if (params) {
+        for (var k in params) {
+          if (params[k] !== undefined && params[k] !== null) p[k] = params[k];
+        }
+      }
+      window.gtag('event', name, p);
+    } catch (e) {}
+  };
+  function track(name, params) { window.wtnTrack(name, params); }
+
+  /* Page identity, derived from the path the same way the reading and
+     matching blocks below derive theirs. */
+  var PATH = window.location.pathname;
+  var mDoor = PATH.match(/\/doorways\/([a-z-]+)\.html$/);
+  var mUnit = PATH.match(/\/units\/unit-(\d+)\.html$/);
+  var UNIT_NO = mUnit ? parseInt(mUnit[1], 10) : null;
+
+  if (mDoor && mDoor[1] !== 'index') {
+    track('doorway_enter', { doorway: mDoor[1] });
+    /* The stars doorway is a section inside the SBNR page. */
+    if (mDoor[1] === 'sbnr' && window.location.hash === '#stars') {
+      track('doorway_enter', { doorway: 'stars' });
+    }
+  }
+  if (/(^|\/)community\.html$/.test(PATH)) track('community_view', {});
+
+  /* Unit start / completion: start = the visitor's first real action
+     on the unit (first micro-check or quiz answer, practice confirm);
+     complete = the unit quiz fully answered AND the performed-practice
+     box confirmed — the unit's own two completion halves. */
+  var unitStarted = false;
+  function unitStart() {
+    if (!UNIT_NO || unitStarted) return;
+    try {
+      if (sessionStorage.getItem('wtn.ustart.' + UNIT_NO)) { unitStarted = true; return; }
+      sessionStorage.setItem('wtn.ustart.' + UNIT_NO, '1');
+    } catch (e) {}
+    unitStarted = true;
+    track('unit_start', { unit: UNIT_NO });
+  }
+  window.wtnUnitStart = unitStart;
+  function scoreBand(pct) {
+    return pct >= 90 ? '90-100' : pct >= 75 ? '75-89' : pct >= 50 ? '50-74'
+      : pct >= 25 ? '25-49' : '0-24';
+  }
+  function unitQuizDone(quiz) {
+    var a = (store().unitQuiz[quiz.id] || {}).answers || {};
+    return Object.keys(a).length >= (quiz.questions || []).length;
+  }
+  function unitPracticeDone() {
+    try {
+      var all = JSON.parse(localStorage.getItem('wtn.unitpractice.v1')) || {};
+      var suffix = new RegExp('#u' + UNIT_NO + '$');
+      for (var k in all) { if (suffix.test(k) && all[k].done) return true; }
+    } catch (e) {}
+    return false;
+  }
+  var unitDoneFired = false;
+  function unitMaybeComplete() {
+    if (!UNIT_NO || unitDoneFired) return;
+    var q = (PD.quizzes || []).filter(function (x) { return x.kind === 'unit'; })[0];
+    if (q && unitQuizDone(q) && unitPracticeDone()) {
+      unitDoneFired = true;
+      track('unit_complete', { unit: UNIT_NO });
+    }
+  }
+  window.wtnUnitPracticeChanged = unitMaybeComplete;
 
   function load() {
     try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }
@@ -63,8 +148,27 @@
   }
 
   /* ---------- ladder rendering ---------- */
+  /* Analytics: a rung counts as "lit" for the ladder_rung_lit event
+     only when it lights DURING this visit — the set of rungs already
+     lit when the page loaded is the baseline and fires nothing. */
+  var litKnown = null;
+  function trackLadder(st) {
+    var lit = {};
+    (PD.levels || []).forEach(function (info) {
+      if (levelComplete(st, info.n)) lit[info.n] = true;
+    });
+    if (litKnown === null) { litKnown = lit; return; }
+    var newly = Object.keys(lit).filter(function (n) { return !litKnown[n]; });
+    newly.forEach(function (n) { track('ladder_rung_lit', { level: parseInt(n, 10) }); });
+    litKnown = lit;
+    if (newly.length && (PD.levels || []).length === 5 &&
+        Object.keys(lit).length === 5) {
+      track('journey_complete', {});
+    }
+  }
   function paintLadders() {
     var st = store();
+    trackLadder(st);
     document.querySelectorAll('[data-rung]').forEach(function (el) {
       var n = parseInt(el.getAttribute('data-rung'), 10);
       var complete = levelComplete(st, n);
@@ -107,6 +211,7 @@
   function renderUnitQuiz(box, quiz) {
     var st = store();
     var saved = (st.unitQuiz[quiz.id] || {}).answers || {};
+    var quizDoneTracked = false;
     box.innerHTML = '';
     var title = document.createElement('h3'); title.textContent = quiz.title || ''; box.appendChild(title);
     quiz.questions.forEach(function (q, qi) {
@@ -129,6 +234,20 @@
           st2.unitQuiz[quiz.id] = st2.unitQuiz[quiz.id] || { answers: {} };
           st2.unitQuiz[quiz.id].answers[qi] = oi;
           save(st2);
+          unitStart();
+          if (!quizDoneTracked && unitQuizDone(quiz)) {
+            quizDoneTracked = true;
+            var ans = st2.unitQuiz[quiz.id].answers;
+            var corr = 0;
+            quiz.questions.forEach(function (qq, qj) {
+              if (ans[qj] === qq.correct) corr++;
+            });
+            track('quiz_complete', {
+              quiz_kind: 'unit', unit: UNIT_NO,
+              score_band: scoreBand(Math.round(corr / quiz.questions.length * 100))
+            });
+            unitMaybeComplete();
+          }
           block.querySelectorAll('label.opt').forEach(function (l, li) {
             l.querySelector('input').disabled = true;
             if (li === q.correct) l.classList.add('correct');
@@ -233,6 +352,10 @@
         fb.classList.add('show');
       });
       var pct = Math.round((correctCount / quiz.questions.length) * 100);
+      track('quiz_complete', {
+        quiz_kind: 'lesson', level: quiz.level, lesson: quiz.lesson,
+        score_band: scoreBand(pct)
+      });
       var st2 = store();
       var e = lessonState(st2, quiz.level, quiz.lesson);
       e.attempts = (e.attempts || 0) + 1;
@@ -388,6 +511,11 @@
         question: question,
         _subject: 'WayToNoor — new question / سؤال جديد'
       };
+      /* Analytics carries the topic's fixed CODE only (data-code on the
+         option) — never the label, the email or the question text. */
+      var topicSel = askForm.querySelector('[name="topic"]');
+      var topicOpt = topicSel ? topicSel.options[topicSel.selectedIndex] : null;
+      var topicCode = (topicOpt && topicOpt.getAttribute('data-code')) || 'general';
       askBtn.disabled = true;
       showAskStatus(S.askSending, false);
       fetch(endpoint, {
@@ -398,6 +526,7 @@
         if (!r.ok) throw new Error('send failed');
         askForm.reset();
         showAskStatus(S.askSent, false);
+        track('ask_submit', { topic: topicCode });
       }).catch(function () {
         showAskStatus(S.askError, true);
       }).then(function () { askBtn.disabled = false; });
@@ -409,6 +538,19 @@
     var done = document.querySelector('[data-graduate-done]');
     if (done) done.style.display = '';
     gradForm.querySelectorAll('input,select,textarea,button').forEach(function (el) { el.disabled = true; });
+  });
+
+  /* ---------- Thiqa handover clicks (analytics) ---------- */
+  document.querySelectorAll('a[href^="https://thiqaacademy.com"]').forEach(function (a) {
+    a.addEventListener('click', function () {
+      var placement = 'other';
+      if (a.closest('[data-ladder-top]')) placement = 'ladder_top';
+      else if (a.closest('[data-arrival]')) placement = 'graduation';
+      else if (PATH.indexOf('mushaf') !== -1) placement = 'mushaf_index';
+      else if (PATH.indexOf('level-5') !== -1) placement = 'graduation';
+      else if (/^\/(en\/)?index\.html$/.test(PATH) || PATH === '/' || PATH === '/en/') placement = 'parents';
+      track('handover_click', { placement: placement });
+    });
   });
 
   /* ---------- wire everything ---------- */
@@ -632,6 +774,10 @@
     var enToggle = root.querySelector(".mp-en-toggle input");
 
     var state = { idx: -1, playing: false, repeatLeft: 0, fellBack: false };
+    /* Analytics session flag: set by stopAll, cleared by playIdx — so
+       play-after-STOP counts as a new listening start (one more
+       mushaf_play) while pause/resume stays the same session. */
+    var stopped = false;
     var reciter = FALLBACK;
     try {
       var saved = window.localStorage.getItem(STORAGE_KEY);
@@ -668,10 +814,23 @@
 
     function playIdx(idx, times) {
       if (idx < 0 || idx >= ayahs.length) { stopAll(); return; }
+      var wasPlaying = state.playing;
       state.idx = idx;
       state.repeatLeft = times || repeatTimes();
       state.fellBack = false;
       state.playing = true;
+      /* Analytics: one mushaf_play per listening START (a fresh press
+         of play / an ayah tap from silence) — the auto-advance between
+         ayahs keeps state.playing true and fires nothing. Categories
+         only: surah number, reciter id, repeat setting. */
+      if (!wasPlaying && window.wtnTrack) {
+        window.wtnTrack('mushaf_play', {
+          surah: parseInt(root.getAttribute("data-surah"), 10) || null,
+          reciter: reciter.id,
+          repeat: state.repeatLeft
+        });
+      }
+      stopped = false;
       if (errLine) errLine.textContent = "";
       audio.src = urlFor(reciter, ayahs[idx].getAttribute("data-g"));
       var p = audio.play();
@@ -704,6 +863,7 @@
       audio.pause();
       state.playing = false;
       state.repeatLeft = 0;
+      stopped = true;
       setHighlight(); syncToggleLabel();
     }
     function syncToggleLabel() {
@@ -731,7 +891,21 @@
     }
     if (btnToggle) btnToggle.addEventListener("click", function () {
       if (state.playing && !audio.paused) { audio.pause(); return; }
-      if (state.idx >= 0 && audio.src) { var p = audio.play(); if (p && p.catch) p.catch(handleError); state.playing = true; setHighlight(); return; }
+      if (state.idx >= 0 && audio.src) {
+        var p = audio.play(); if (p && p.catch) p.catch(handleError);
+        state.playing = true; setHighlight();
+        /* Play pressed after a STOP (not a pause): a new listening
+           start — one mushaf_play, same categories as in playIdx. */
+        if (stopped && window.wtnTrack) {
+          window.wtnTrack('mushaf_play', {
+            surah: parseInt(root.getAttribute("data-surah"), 10) || null,
+            reciter: reciter.id,
+            repeat: repeatTimes()
+          });
+        }
+        stopped = false;
+        return;
+      }
       playIdx(0, repeatTimes());
     });
     if (btnStop) btnStop.addEventListener("click", stopAll);
@@ -936,6 +1110,7 @@
       inp.addEventListener('change', function () {
         var st = load(); st.micro = st.micro || {};
         st.micro[key] = oi; save(st);
+        if (window.wtnUnitStart) window.wtnUnitStart();
         block.querySelectorAll('label.opt').forEach(function (l, li) {
           l.querySelector('input').disabled = true;
           if (li === q.correct) l.classList.add('correct');
@@ -1230,6 +1405,8 @@
       e.done = cb.checked;
       all[id] = e; saveAll(all);
       if (tag) tag.style.display = cb.checked ? '' : 'none';
+      if (window.wtnUnitStart) window.wtnUnitStart();
+      if (window.wtnUnitPracticeChanged) window.wtnUnitPracticeChanged();
     });
     if (note) note.addEventListener('change', function () {
       var all = loadAll();
