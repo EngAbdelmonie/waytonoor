@@ -954,16 +954,21 @@
   });
 
   /* ---------- key-term tap-to-reveal cards ---------- */
+  /* Also serves the doorway reveal cards (Law-2 Step 3, GAP 1), which
+     carry their own generic show/hide chrome on the button
+     (data-kp-show / data-kp-hide) instead of the terms' wording. */
   document.querySelectorAll('[data-kp-toggle]').forEach(function (btn) {
     var card = btn.closest('.kp-card');
     var body = card ? card.querySelector('.kp-body') : null;
     var state = btn.querySelector('.kp-state');
     if (!body) return;
+    var showTxt = btn.getAttribute('data-kp-show') || S.kpShow || '';
+    var hideTxt = btn.getAttribute('data-kp-hide') || S.kpHide || '';
     btn.addEventListener('click', function () {
       var open = body.hidden;
       body.hidden = !open;
       btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-      if (state) state.textContent = open ? (S.kpHide || '') : (S.kpShow || '');
+      if (state) state.textContent = open ? hideTxt : showTxt;
     });
   });
 })();
@@ -1186,4 +1191,51 @@
 
   again.addEventListener('click', build);
   build();
+})();
+
+/* WayToNoor — unit practice box (Law-2 Step 3, GAP 4): the performed
+   practice task on unit pages. The task text is the unit's own §9
+   «one next step», verbatim, seated in the journey practice pattern
+   (confirm checkbox + «how was it?» review field). State lives ONLY
+   under its own store key 'wtn.unitpractice.v1': this block never
+   reads or writes 'wtn.progress.v1', 'wtn.reading.v1' or
+   'wtn.match.v1', never dispatches 'wtn:progress', and gates or
+   unlocks nothing — quiz scores, micro-checks, reading progress,
+   matching drills and the ladder maths cannot be affected by it. */
+(function () {
+  'use strict';
+  var KEY = 'wtn.unitpractice.v1';
+  var boxes = document.querySelectorAll('[data-unit-practice-box]');
+  if (!boxes.length) return;
+  var path = window.location.pathname;
+  function loadAll() {
+    try { return JSON.parse(localStorage.getItem(KEY)) || {}; }
+    catch (e) { return {}; }
+  }
+  function saveAll(all) {
+    try { localStorage.setItem(KEY, JSON.stringify(all)); } catch (e) {}
+  }
+  boxes.forEach(function (box) {
+    var id = path + '#u' + box.getAttribute('data-unit');
+    var cb = box.querySelector('input[type=checkbox][data-unit-practice]');
+    var note = box.querySelector('input[type=text][data-unit-practice-note]');
+    var tag = box.querySelector('[data-done-tag]');
+    var entry = loadAll()[id] || {};
+    if (cb) cb.checked = !!entry.done;
+    if (note) note.value = entry.note || '';
+    if (tag) tag.style.display = entry.done ? '' : 'none';
+    if (cb) cb.addEventListener('change', function () {
+      var all = loadAll();
+      var e = all[id] || {};
+      e.done = cb.checked;
+      all[id] = e; saveAll(all);
+      if (tag) tag.style.display = cb.checked ? '' : 'none';
+    });
+    if (note) note.addEventListener('change', function () {
+      var all = loadAll();
+      var e = all[id] || {};
+      e.note = note.value;
+      all[id] = e; saveAll(all);
+    });
+  });
 })();
