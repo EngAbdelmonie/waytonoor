@@ -270,6 +270,6 @@
   "source_file": "user-profile-reference.jpg",
   "license": "The founder's own photo — owner-supplied, NOT a licensed stock image",
   "author": "Abdelmoniem Darwish (the founder)",
-  "derivative": "none — placed as supplied (200x201 JPEG) in the founder's message block on the About pages only, by the owner's explicit direction (amendment 2026-11-27 06:58); the site's no-people imagery law stands everywhere else"
+  "derivative": "background replaced with PLAIN WHITE (owner standard, ordered 2026-11-27 07:16-07:17): the as-supplied photo carried his safety-consultant branding icons/text in the top-right corner; the site copy was cleaned by segmentation matte (u2net human segmentation) composited on pure white — the founder himself is pixel-faithful from the source photo (face, features, clothing, pose untouched), still 200x201 JPEG, same path/name. The original in workspace/profile-images/ is untouched. Placed in the founder's message block on the About pages only, by the owner's explicit direction (amendment 2026-11-27 06:58); the site's no-people imagery law stands everywhere else"
  }
 ]
