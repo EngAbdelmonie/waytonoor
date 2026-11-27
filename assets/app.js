@@ -1016,6 +1016,15 @@
         if (h.getBoundingClientRect().top < 200) current = i;
       });
       chips.forEach(function (c, i) { c.classList.toggle('now', i === current); });
+      /* Hybrid redesign: the chain station whose heading is current
+         lights its medallion too (the chunk holding that heading). */
+      article.querySelectorAll('.hy-chunk.now').forEach(function (c) {
+        c.classList.remove('now');
+      });
+      if (current >= 0 && heads[current].closest) {
+        var ch = heads[current].closest('.hy-chunk');
+        if (ch) ch.classList.add('now');
+      }
     }
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
@@ -1047,6 +1056,13 @@
       if (jfill && levels.length) {
         jfill.style.width = (lit / levels.length * 100) + '%';
       }
+      /* Hybrid redesign (concept C finale): the ascending rung
+         columns above the ladder-top state light rung by rung. */
+      document.querySelectorAll('[data-finale-bar]').forEach(function (b) {
+        var n = parseInt(b.getAttribute('data-finale-bar'), 10);
+        var info = levels.filter(function (l) { return l.n === n; })[0];
+        b.classList.toggle('lit', levelComplete(st, info));
+      });
     }
     document.addEventListener('wtn:progress', paint);
     window.addEventListener('storage', paint);
@@ -1415,4 +1431,67 @@
       all[id] = e; saveAll(all);
     });
   });
+})();
+
+/* WayToNoor — hybrid redesign (2026-11-27): the chain states.
+   Self-contained like the blocks above: paints [data-chain-unit]
+   nodes (homepage path medallions + units-index cards) from the
+   visitor's LOCAL progress only — the unit's own completion maths
+   (its quiz fully answered in 'wtn.progress.v1' AND its performed
+   practice confirmed in 'wtn.unitpractice.v1'). Completed = gold
+   with a check badge; the first uncompleted = current, carrying
+   the «أنت هنا» chip; the rest stay neutral. Nothing is ever
+   locked: every node remains a live link, exactly as the site's
+   open text promises. */
+(function () {
+  'use strict';
+  var dataEl = document.getElementById('page-data');
+  var PD = {};
+  try { PD = dataEl ? JSON.parse(dataEl.textContent) : {}; } catch (e) { PD = {}; }
+  var S = PD.strings || {};
+  var counts = PD.unit_quiz_counts || {};
+
+  function unitDone(n) {
+    var need = counts[n];
+    var st = {};
+    try { st = JSON.parse(localStorage.getItem('wtn.progress.v1')) || {}; }
+    catch (e) { st = {}; }
+    if (need) {
+      var a = ((st.unitQuiz || {})['u' + n] || {}).answers || {};
+      if (Object.keys(a).length < need) return false;
+    }
+    try {
+      var all = JSON.parse(localStorage.getItem('wtn.unitpractice.v1')) || {};
+      var suffix = new RegExp('#u' + n + '$');
+      for (var k in all) { if (suffix.test(k) && all[k].done) return true; }
+    } catch (e) {}
+    return false;
+  }
+
+  function paintChain() {
+    var nodes = document.querySelectorAll('[data-chain-unit]');
+    if (!nodes.length) return;
+    var currentSet = false;
+    nodes.forEach(function (el) {
+      var n = parseInt(el.getAttribute('data-chain-unit'), 10);
+      var done = unitDone(n);
+      el.classList.toggle('done', done);
+      var isNow = !done && !currentSet;
+      if (isNow) currentSet = true;
+      el.classList.toggle('now', isNow);
+      var chip = el.querySelector('[data-chain-here]');
+      if (chip) {
+        if (isNow && S.chainHere) {
+          chip.textContent = S.chainHere;
+          chip.hidden = false;
+        } else {
+          chip.hidden = true;
+        }
+      }
+    });
+  }
+
+  paintChain();
+  document.addEventListener('wtn:progress', paintChain);
+  window.addEventListener('storage', paintChain);
 })();

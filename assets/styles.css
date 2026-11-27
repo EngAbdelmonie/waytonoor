@@ -613,3 +613,90 @@ fieldset.hy-chunk{display:block}
 @media (prefers-reduced-motion: reduce){
   .hy-figure img,.hy-arch img,.hy-pauseband img{animation:none}
 }
+
+/* =====================================================================
+   HYBRID REDESIGN (2026-11-27) — owner-approved hybrid of the three
+   design concepts: A «المسار المتسلسل» as the structural backbone
+   (homepage chain of medallions, chain-spine step-cards in units and
+   levels, connected ladder rungs, «next station» pager), B's photo
+   cards inside unit pages (the Mishkat arch header — markup side),
+   and C's cinematic touch ONLY at the homepage opening and the
+   journey ladder finale. Site palette variables only; transitions
+   are CSS-only and subtle; all motion dies under reduced-motion.
+   ===================================================================== */
+
+/* ---------- A: homepage chain of medallions on a winding wire ---------- */
+.chain{position:relative;max-width:620px;margin:30px auto 6px;aspect-ratio:360/1560}
+.chain svg.wire{position:absolute;inset:0;width:100%;height:100%;opacity:.85}
+[dir="ltr"] .chain svg.wire{transform:scaleX(-1)}
+.chain-node{position:absolute;transform:translate(50%,-50%);width:180px;text-align:center;text-decoration:none;color:#fff}
+[dir="ltr"] .chain-node{transform:translate(-50%,-50%)}
+.chain-med{position:relative;display:flex;align-items:center;justify-content:center;width:76px;height:76px;margin:0 auto;border-radius:50%;background:#fff;border:3px solid var(--sand-dark);box-shadow:0 6px 16px rgba(0,0,0,.18);transition:transform .25s ease,box-shadow .25s ease}
+.chain-med b{font-family:Georgia,'Noto Naskh Arabic',serif;font-size:1.55rem;font-weight:700;color:var(--teal);line-height:1}
+.chain-node:hover .chain-med{transform:translateY(-3px)}
+.chain-node .chain-chk{position:absolute;bottom:-4px;inset-inline-end:2px;width:24px;height:24px;border-radius:50%;background:var(--emerald);border:2px solid #fff;display:none;align-items:center;justify-content:center;padding:4px}
+.chain-node.done .chain-med{background:radial-gradient(circle at 35% 30%,#ffe9a8,var(--gold));border-color:var(--gold)}
+.chain-node.done .chain-med b{color:#5c430a}
+.chain-node.done .chain-chk{display:flex}
+.chain-node.now .chain-med{width:94px;height:94px;background:var(--emerald);border-color:var(--gold);box-shadow:0 0 0 8px rgba(201,164,78,.32),0 0 0 19px rgba(201,164,78,.14),0 12px 24px rgba(0,0,0,.3)}
+.chain-node.now .chain-med b{color:#fff;font-size:1.9rem}
+.chain-lab{display:inline-block;margin-top:9px;background:rgba(255,255,255,.13);border:1px solid rgba(201,164,78,.45);color:#fff;font-weight:700;font-size:.95rem;line-height:1.5;padding:2px 12px;border-radius:999px}
+.chain-node.done .chain-lab{border-color:var(--gold);color:#ffe9a8}
+.chain-here{display:inline-block;margin-top:6px;background:var(--gold);color:var(--teal);font-weight:800;font-size:.84rem;line-height:1.5;padding:3px 14px;border-radius:999px;box-shadow:0 4px 10px rgba(0,0,0,.25);white-space:nowrap}
+.chain-here[hidden]{display:none}
+@media(max-width:640px){.chain-node{width:168px}.chain-med{width:68px;height:68px}.chain-node.now .chain-med{width:84px;height:84px}.chain-lab{font-size:.88rem}}
+
+/* ---------- A: chain-spine step-cards (unit + level articles) ---------- */
+.chain-article{counter-reset:chain-station}
+.chain-article .hy-chunk{position:relative;counter-increment:chain-station;margin-inline-start:32px}
+.chain-article .hy-chunk::before{content:counter(chain-station,arabic-indic);position:absolute;top:16px;inset-inline-start:-32px;width:56px;height:56px;border-radius:50%;background:#fff;border:3px solid var(--sand-dark);color:var(--teal);display:flex;align-items:center;justify-content:center;font-family:Georgia,'Noto Naskh Arabic',serif;font-weight:800;font-size:1.3rem;z-index:2;box-shadow:0 6px 14px rgba(15,76,76,.12)}
+[dir="ltr"] .chain-article .hy-chunk::before{content:counter(chain-station)}
+.chain-article .hy-chunk::after{content:"";position:absolute;top:78px;bottom:-26px;inset-inline-start:-6px;width:5px;border-radius:99px;background:repeating-linear-gradient(180deg,var(--gold) 0 3px,transparent 3px 15px);z-index:1}
+.chain-article .hy-chunk:last-of-type::after{display:none}
+.chain-article .hy-chunk.now{border-color:var(--gold);box-shadow:0 12px 28px rgba(15,76,76,.14)}
+.chain-article .hy-chunk.now::before{background:var(--teal);border-color:var(--gold);color:#fff;box-shadow:0 0 0 6px rgba(201,164,78,.3),0 8px 18px rgba(15,76,76,.25)}
+@media(max-width:640px){
+  .chain-article .hy-chunk{margin-inline-start:24px}
+  .chain-article .hy-chunk::before{width:46px;height:46px;font-size:1.1rem;inset-inline-start:-24px;top:14px}
+  .chain-article .hy-chunk::after{top:66px;inset-inline-start:-3px}
+}
+
+/* ---------- A: «next station» pager card (unit pages) ---------- */
+.station-pager{align-items:flex-start}
+.pager a.next-station{flex:1 1 300px;background:linear-gradient(135deg,var(--teal),var(--emerald) 55%,#0e5f52);border:1.5px solid var(--gold);border-radius:18px;padding:16px 22px;display:flex;flex-direction:column;gap:2px;box-shadow:0 10px 24px -14px rgba(15,76,76,.5);transition:transform .25s ease,box-shadow .25s ease}
+.pager a.next-station:hover{background:linear-gradient(135deg,var(--teal),var(--emerald) 55%,#0e5f52);transform:translateY(-3px);box-shadow:0 16px 30px -16px rgba(15,76,76,.55)}
+.pager a.next-station .ns-label{color:#ffe9a8;font-weight:800;font-size:.85rem}
+.pager a.next-station .ns-title{color:#fff;font-weight:800;font-size:1.12rem;line-height:1.6}
+
+/* ---------- A: connected ladder rungs + mini-ladder chain dots ---------- */
+.ladder{position:relative}
+.ladder::before{content:"";position:absolute;top:26px;bottom:26px;inset-inline-start:45px;width:5px;border-radius:99px;background:repeating-linear-gradient(180deg,var(--gold) 0 3px,transparent 3px 15px);opacity:.55}
+@media(max-width:760px){.ladder::before{inset-inline-start:39px}}
+.mini-ladder .bar{position:relative}
+.mini-ladder .bar::after{content:"";position:absolute;top:-7px;inset-inline-start:50%;transform:translateX(50%);width:11px;height:11px;border-radius:50%;background:#fff;border:2.5px solid var(--gold);z-index:1}
+[dir="ltr"] .mini-ladder .bar::after{transform:translateX(-50%)}
+.mini-ladder .step.lit .bar::after{background:var(--gold)}
+.mini-ladder .step.open .bar::after{background:var(--emerald);border-color:var(--emerald)}
+
+/* ---------- C finale: ascending rung columns (journey index) ---------- */
+.hy-finale{display:flex;align-items:flex-end;gap:10px;margin:28px 0 4px;padding:20px 20px 0;border:1.5px solid var(--gold);border-radius:18px;background:linear-gradient(180deg,#fffdf6,var(--sand))}
+.hy-finale-bar{flex:1;border-radius:10px 10px 0 0;background:var(--sand-dark);border:1px solid var(--line);border-bottom:none;transition:background .4s ease,box-shadow .4s ease}
+.hy-finale-bar.lit{background:linear-gradient(180deg,#ffe9a8,var(--gold));border-color:var(--gold);box-shadow:0 0 16px rgba(201,164,78,.5)}
+
+/* ---------- C opening: cinematic homepage hero (this section only) ---------- */
+.hy-hero.hy-cine .lockup-latin{font-size:clamp(3rem,7.5vw,5.1rem)}
+.hy-hero.hy-cine .lockup-ar{font-size:clamp(1.5rem,3.4vw,2.1rem)}
+.hy-hero.hy-cine .hy-arch img{height:600px;animation-duration:48s}
+@media(max-width:900px){.hy-hero.hy-cine .hy-arch img{height:480px}}
+
+/* ---------- units-index cards: chain states on the existing cards ---------- */
+.hy-unit-card{border-radius:18px;transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease}
+.hy-unit-card:hover{transform:translateY(-3px);box-shadow:0 14px 26px -18px rgba(15,76,76,.4)}
+.hy-unit-card.done{border-color:var(--gold);background:linear-gradient(0deg,#fffdf4,#fff)}
+.hy-unit-card.now{border-color:var(--emerald);box-shadow:0 12px 26px -16px rgba(15,76,76,.45)}
+.hy-unit-card .chain-here{margin-top:10px;box-shadow:none}
+
+@media (prefers-reduced-motion: reduce){
+  .chain-med,.hy-finale-bar,.pager a.next-station,.hy-unit-card{transition:none}
+  .hy-hero.hy-cine .hy-arch img{animation:none}
+}
