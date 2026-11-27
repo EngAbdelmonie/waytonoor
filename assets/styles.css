@@ -370,6 +370,12 @@ footer .fl-ar{font-weight:700;color:#fff}
 .hy-night .hy-unit-row{color:#fff;border-bottom-color:rgba(201,164,78,.35)}
 .hy-unit-row:hover{padding-inline-start:14px;background:rgba(201,164,78,.08)}
 .hy-unit-row b{font-family:Georgia,'Noto Naskh Arabic',serif;font-size:1.65rem;color:var(--gold);min-width:46px;line-height:1;font-weight:700}
+/* Night-list numerals (owner decision 2026-11-27, audit medium-2 correction):
+   inside .hy-night the row numbers sit on the night gradient, whose emerald
+   stop #126a5c drops var(--gold) to 2.75:1 — so night rows use the approved
+   night-text shade #ffe9a8 (5.39:1 worst stop, 8.10:1 on teal). Teal-strip
+   .hy-stat b (4.13:1) and all decorative gold stay untouched. */
+.hy-night .hy-unit-row b{color:#ffe9a8}
 .hy-unit-row span{font-weight:700}
 .hy-unit-card .hy-medal-sm{margin-bottom:10px}
 
