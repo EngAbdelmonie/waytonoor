@@ -266,10 +266,10 @@
  {
   "file": "founder-portrait.jpg",
   "location": "assets/brand/founder-portrait.jpg",
-  "source_page": "owner-supplied profile reference (workspace/profile-images/user-profile-reference.jpg)",
-  "source_file": "user-profile-reference.jpg",
+  "source_page": "owner-supplied studio portrait (workspace/profile-images/user-profile-hires-2026-11-27.jpg), sent by the owner 2026-11-27 11:01",
+  "source_file": "user-profile-hires-2026-11-27.jpg",
   "license": "The founder's own photo — owner-supplied, NOT a licensed stock image",
   "author": "Abdelmoniem Darwish (the founder)",
-  "derivative": "background replaced with PLAIN WHITE (owner standard, ordered 2026-11-27 07:16-07:17): the as-supplied photo carried his safety-consultant branding icons/text in the top-right corner; the site copy was cleaned by segmentation matte (u2net human segmentation) composited on pure white — the founder himself is pixel-faithful from the source photo (face, features, clothing, pose untouched), still 200x201 JPEG, same path/name. The original in workspace/profile-images/ is untouched. Placed in the founder's message block on the About pages only, by the owner's explicit direction (amendment 2026-11-27 06:58); the site's no-people imagery law stands everywhere else"
+  "derivative": "NONE — used AS-IS, byte-identical to the owner's supplied file (896x899 JPEG): no segmentation, no background replacement, no retouching. REPLACED 2026-11-27 per the owner's ruling (11:01-11:02): the previous site copy was a segmentation-matted derivative (u2net matte composited on pure white, from the older 200x201 reference) and the owner rejected it as looking retouched/smeared, so he supplied this clean natural studio photo (light background, no branding text) and it now serves as the live founder portrait. Placed in the founder's message block on the About pages and in the homepage founder section, by the owner's explicit direction; the site's no-people imagery law stands everywhere else"
  }
 ]
